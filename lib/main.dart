@@ -2,8 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:one_minute_recording/const/constants.dart' as constant;
 import 'package:one_minute_recording/record.dart';
+import 'flutter_sound_recorder.dart';
 
-import 'grid.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

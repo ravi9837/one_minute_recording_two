@@ -20,6 +20,6 @@ int sampleRate = 16000;
 List audioEncoders = [AudioEncoder.wav,AudioEncoder.aacEld,AudioEncoder.aacHe,AudioEncoder.aacLc,AudioEncoder.amrNb,AudioEncoder.flac,AudioEncoder.pcm8bit,AudioEncoder.pcm16bit];
 TextEditingController bitRateController = TextEditingController();
 TextEditingController sampleRateController = TextEditingController();
-
+List mp3Bit = [45-85,70-105,100-130,120-150,140-185,150-195,170-210,190-250,220-260];
 
 

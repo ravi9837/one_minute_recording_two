@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:one_minute_recording/methods/audioMethods.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_audio_trimmer/flutter_audio_trimmer.dart';
 
 
 class AudioPage extends StatefulWidget {
@@ -23,10 +23,19 @@ class _AudioPageState extends State<AudioPage> {
   List recordings = [];
   AudioPlayer audioPlayer = AudioPlayer();
   String filePath = '';
+  List nextPressed = [];
+  // DateTime time = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    startRecording();
+    // var startTime = getCurrentTime();
+    DateTime.now();
+    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
+    print("${DateTime.now().millisecondsSinceEpoch}");
+    print("${DateTime.now()}");
+    // print(DateTime.now().millisecondsSinceEpoch);
     bitRateController.text = bitRate.toString();
     sampleRateController.text = sampleRate.toString();
   }
@@ -37,6 +46,8 @@ class _AudioPageState extends State<AudioPage> {
     sampleRateController.dispose();
     super.dispose();
   }
+
+
 
   void playAudio(String filePath) async {
     await audioPlayer.play(filePath as Source);
@@ -67,21 +78,70 @@ class _AudioPageState extends State<AudioPage> {
     }
   }
 
-  void setNextSampleRate() {
-    setState(() {
-      sampleRate = int.tryParse(sampleRateController.text) ?? 16000;
-      sampleRate += 1000; // Increase the sample rate by 1000 Hz
-      sampleRateController.text = sampleRate.toString();
-    });
+
+  Future<void> _onTrimAudioFile() async {
+    try {
+      if (_file != null) {
+        Directory directory = await getApplicationDocumentsDirectory();
+
+        File? trimmedAudioFile = await FlutterAudioTrimmer.trim(
+          inputFile: _file!,
+          outputDirectory: directory,
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          fileType: Platform.isAndroid ? AudioFileType.mp3 : AudioFileType.m4a,
+          time: AudioTrimTime(
+            start: const Duration(seconds: 50),
+            end: const Duration(seconds: 100),
+          ),
+        );
+        setState(() {
+          _outputFile = trimmedAudioFile;
+        });
+      } else {
+        _showSnackBar('Select audio file for trim');
+      }
+    } on AudioTrimmerException catch (e) {
+      _showSnackBar(e.message);
+    } catch (e) {
+      _showSnackBar(e.toString());
+    }
   }
 
-  void setNextBitRate() {
-    setState(() {
-      bitRate = int.tryParse(bitRateController.text) ?? 32000;
-      bitRate += 10000; // Increase the bit rate by 10000 bps
-      bitRateController.text = bitRate.toString();
-    });
+  Future<void> stopRecord() async {
+    _audioRecorder.stop();
+    int i = 0;
+    List l =  nextPressed;
+    print(nextPressed);
+    int j = 1;
+    List l1 = [];
+    List l2 = [0];
+    late int start;
+    late int end;
+    int a = 0;
+    int b = 1;
+
+    for(i ; i < l.length-1;i++){
+      int c = l[j] - l[i];
+      int d = (c/1000).floor();
+      l1.add(d);
+      l2.add(l2[i]+d);
+      j++;
+    }
+    print('l1 : $l1');
+    print('l2 : $l2');
+
+
+    for (a;a<l2.length-1;a++){
+      start = l2[a];
+      end = l2[b];
+      print('hii');
+      // print('result : $result');
+      print('start : $start');
+      print('end : $end');
+      b++;
+    }
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -98,64 +158,26 @@ class _AudioPageState extends State<AudioPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    startRecording();
+
+                    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
+                    print("${DateTime.now().millisecondsSinceEpoch}");
+                    print("${DateTime.now()}");
+                    // startRecording();
                   },
-                  child: Text("Start"),
+                  child: Text("Next"),
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    // var endTime = getCurrentTime();
+                    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
+                    print("${DateTime.now().millisecondsSinceEpoch}");
+                    // print("${DateTime.now()}");
                     stopRecord();
+                    print(nextPressed);
                   },
                   child: Text("Stop"),
                 ),
                 SizedBox(height: 16),
-                Text(
-                  'Bit Rate: $bitRate bps',
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'Sample Rate: $sampleRate Hz',
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'encoder: ${encoder}',
-                  style: TextStyle(fontSize: 16),
-                ),
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: bitRateController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Bit Rate (bps)',
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: setNextBitRate,
-                      child: Icon(Icons.arrow_forward),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: sampleRateController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Sample Rate (Hz)',
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: setNextSampleRate,
-                      child: Icon(Icons.arrow_forward),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -198,4 +220,5 @@ class _AudioPageState extends State<AudioPage> {
       ),
     );
   }
+
 }
