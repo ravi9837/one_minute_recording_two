@@ -47,8 +47,8 @@ class HomePage extends StatelessWidget {
         child: ElevatedButton(
           child: const Text('Click me ❤️'),
           onPressed: () {
-            groupValues();
-            questionValues();
+            // groupValues();
+            // questionValues();
             // showQuestion = true;
             Navigator.push(
               context,

@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:core';
 import 'package:flutter/material.dart';
+import 'package:one_minute_recording/audio_cutter.dart';
 import 'package:one_minute_recording/methods/audioMethods.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_audio_trimmer/flutter_audio_trimmer.dart';
 
 
 class AudioPage extends StatefulWidget {
@@ -24,7 +25,9 @@ class _AudioPageState extends State<AudioPage> {
   AudioPlayer audioPlayer = AudioPlayer();
   String filePath = '';
   List nextPressed = [];
-  // DateTime time = DateTime.now();
+  StreamSubscription<Amplitude>? _amplitudeSub;
+  Amplitude? _amplitude;
+
 
   @override
   void initState() {
@@ -38,20 +41,30 @@ class _AudioPageState extends State<AudioPage> {
     // print(DateTime.now().millisecondsSinceEpoch);
     bitRateController.text = bitRate.toString();
     sampleRateController.text = sampleRate.toString();
+
+    _amplitudeSub = _audioRecorder
+        .onAmplitudeChanged(const Duration(milliseconds:100))
+        .listen((amp) {
+      setState(() => _amplitude = amp);
+    });
+
   }
 
   @override
   void dispose() {
     bitRateController.dispose();
     sampleRateController.dispose();
+    _amplitudeSub?.cancel();
     super.dispose();
   }
 
-
+  /// function for playing recorded audio
 
   void playAudio(String filePath) async {
     await audioPlayer.play(filePath as Source);
   }
+
+  /// function to start the audio recording
 
   Future<String?> startRecording() async {
     bool hasPermission = await checkPermission();
@@ -78,81 +91,40 @@ class _AudioPageState extends State<AudioPage> {
     }
   }
 
+  /// Function for trimming the complete audio file in chunks according to the questions & answers
 
-  Future<void> _onTrimAudioFile() async {
-    try {
-      if (_file != null) {
-        Directory directory = await getApplicationDocumentsDirectory();
-
-        File? trimmedAudioFile = await FlutterAudioTrimmer.trim(
-          inputFile: _file!,
-          outputDirectory: directory,
-          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          fileType: Platform.isAndroid ? AudioFileType.mp3 : AudioFileType.m4a,
-          time: AudioTrimTime(
-            start: const Duration(seconds: 50),
-            end: const Duration(seconds: 100),
-          ),
-        );
-        setState(() {
-          _outputFile = trimmedAudioFile;
-        });
-      } else {
-        _showSnackBar('Select audio file for trim');
-      }
-    } on AudioTrimmerException catch (e) {
-      _showSnackBar(e.message);
-    } catch (e) {
-      _showSnackBar(e.toString());
-    }
+  double previous = 0;
+  late double next;
+  Future<void> audioTrim(id) async{
+    /// initialization for variables
+    List timeStamps =  nextPressed;
+    /// splitting the audio file in chunks duration
+    double dur = timeStamps[id+1].toDouble() - timeStamps[id].toDouble();
+    next = dur/1000;
+    next += previous;
+    ///Give the file path in pathToFile variable
+    String pathToFile = filePath;
+    var result = await AudioCutter.cutAudio(pathToFile,previous,next);
+    previous = next;
   }
+
+  /// function for stopping the audio recording
 
   Future<void> stopRecord() async {
     _audioRecorder.stop();
-    int i = 0;
-    List l =  nextPressed;
-    print(nextPressed);
-    int j = 1;
-    List l1 = [];
-    List l2 = [0];
-    late int start;
-    late int end;
-    int a = 0;
-    int b = 1;
-
-    for(i ; i < l.length-1;i++){
-      int c = l[j] - l[i];
-      int d = (c/1000).floor();
-      l1.add(d);
-      l2.add(l2[i]+d);
-      j++;
-    }
-    print('l1 : $l1');
-    print('l2 : $l2');
-
-
-    for (a;a<l2.length-1;a++){
-      start = l2[a];
-      end = l2[b];
-      print('hii');
-      // print('result : $result');
-      print('start : $start');
-      print('end : $end');
-      b++;
-    }
   }
-  
+  var index =0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Record Audio'),
+        title: const Text('Record Audio'),
       ),
       body: Column(
         children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -162,9 +134,12 @@ class _AudioPageState extends State<AudioPage> {
                     nextPressed.add(DateTime.now().millisecondsSinceEpoch);
                     print("${DateTime.now().millisecondsSinceEpoch}");
                     print("${DateTime.now()}");
-                    // startRecording();
+                    print("Trim the audio function start");
+                    audioTrim(index);
+                    index+=1;
+                    print("Index : $index");
                   },
-                  child: Text("Next"),
+                  child: const Text("Next"),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -173,29 +148,34 @@ class _AudioPageState extends State<AudioPage> {
                     print("${DateTime.now().millisecondsSinceEpoch}");
                     // print("${DateTime.now()}");
                     stopRecord();
-                    print(nextPressed);
+
                   },
-                  child: Text("Stop"),
+                  child: const Text("Stop"),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
+                if (_amplitude != null) ...[
+                  const SizedBox(height: 40),
+                  Text('Current: ${_amplitude?.current ?? 0.0}'),
+                  Text('Max: ${_amplitude?.max ?? 0.0}'),
+                ],
               ],
             ),
           ),
           if (recordings.isNotEmpty)
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               color: Colors.grey[200],
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  const Text(
                     'Recorded Audio',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   ListView.builder(
                     shrinkWrap: true,
                     itemCount: recordings.length,
@@ -204,7 +184,7 @@ class _AudioPageState extends State<AudioPage> {
                       return ListTile(
                         title: Text(recordingPath),
                         trailing: IconButton(
-                          icon: Icon(Icons.play_arrow),
+                          icon: const Icon(Icons.play_arrow),
                           onPressed: () {
                             playAudio;
                             // Implement audio playback for the selected recordingPath

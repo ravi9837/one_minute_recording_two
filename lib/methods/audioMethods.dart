@@ -11,11 +11,11 @@ import '../const/constants.dart';
 import '../main.dart';
 
 
+
   bool showQuestion = false;
   final _audioRecorder = Record();
   String _directoryPath = "";
   bool continueRecording = true;
-  int i = 0; // declare i as a class-level variable
   final FirebaseStorage storage = FirebaseStorage.instance;
   List<String> listOfData = ['what is your name','what is your age','what is your number','what is your height','what is your weight','what is your DOB','your mother name','your father name'];
   List<String> listOfAns = [];
@@ -55,11 +55,11 @@ void addToCategory(){
 // }
 
 
-
+/// for getting file path
 
   Future<String> getFilePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.aac';
+    final Directory directory = await getTemporaryDirectory();
+    return '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
   }
 
 
@@ -198,34 +198,6 @@ Future<void> startRecordd() async {
 }
 void stopRecord() {
   _audioRecorder.stop();
-  int i = 0;
-  List l =  [1686391589401, 1686391594320, 1686391597424, 1686391599847, 1686391601830, 1686391603374];
-  int j = 1;
-  List l1 = [];
-  List l2 = [0];
-  late var start;
-  late var end;
-
-  for(i ; i < l.length-1;i++){
-    int c = l[j] - l[i];
-    double d = c/1000;
-    l1.add(d);
-    l2.add(l2[i]+d);
-    j++;
-  }
-  print(l1);
-  print(l2);
-
-  int a = 0;
-  int b = 1;
-  for (a;a<l2.length-1;a++){
-    start = l2[a];
-    end = l2[b];
-    print(start);
-    print(end);
-    b++;
-  }
-
 }
 
 

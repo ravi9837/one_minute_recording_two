@@ -3,7 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:record/record.dart';
 
-List<Map<String,dynamic>> questionList = [{'question':"What is your name","group":'personal'},{'question':"your age","group":'personal'},{'question':"birth date","group":'personal'},{'question':"height","group":'measurement'},{'question':"weight","group":'measurement'},{'question':"blood group","group":'clinical'},{'question':"vision","group":'screening'},{'question':"Mobile number","group":'personal'},{'question':"Drinking","group":'social'},{'question':"Tobacco","group":'social'},{'question':"any medical history","group":'clinical_history'},{'question':"Diabetes","group":'clinical_history'},{'question':"oral cancer screening","group":'screening'}];
+List<Map<String,dynamic>> questionList = [{'id': 0,'question':"What is your name","group":'personal'},{'id': 1,'question':"your age","group":'personal'},{'question':"birth date","group":'personal'},{'question':"height","group":'measurement'},{'question':"weight","group":'measurement'},{'question':"blood group","group":'clinical'},{'question':"vision","group":'screening'},{'question':"Mobile number","group":'personal'},{'question':"Drinking","group":'social'},{'question':"Tobacco","group":'social'},{'question':"any medical history","group":'clinical_history'},{'question':"Diabetes","group":'clinical_history'},{'question':"oral cancer screening","group":'screening'}];
 // List personal = [];
 // List measurement = [];
 // List clinical = [];
@@ -13,7 +13,7 @@ List<Map<String,dynamic>> questionList = [{'question':"What is your name","group
 // List group = [];
 // Map<String, List<String>> newList = {};
 String? category;
-int i = 0;
+List ques = [0,1,2,3,4,5,6,7];
 TextEditingController ans = TextEditingController();
 int bitRate = 32000;
 int sampleRate = 16000;
