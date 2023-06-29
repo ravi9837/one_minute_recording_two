@@ -4,10 +4,12 @@ import 'dart:io' show Platform;
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/number_symbols_data.dart';
 import 'package:one_minute_recording/const/toastMessage.dart';
 import 'package:one_minute_recording/methods/audioMethods.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
 
 import 'audio_cutter.dart';
 
@@ -51,20 +53,22 @@ class _AudioPageState extends State<AudioPage> {
 
 
 
-  int lowCounter3 = 0;
-  int highCounter3 = 0;
-  int threshold3 = 3;
-
-  int lowCounter5 = 0;
-  int highCounter5 = 0;
-  int threshold5 = 4;
-  int audioCount = 0;
-
-  bool flag = false;
+  // int lowCounter3 = 0;
+  // int highCounter3 = 0;
+  // int threshold3 = 3;
+  //
+  // int lowCounter5 = 0;
+  // int highCounter5 = 0;
+  // int threshold5 = 4;
+  // int audioCount = 0;
+  //
+  // bool flag = false;
 
   TextEditingController textController = TextEditingController();
-  List fiveAmp = [];
 
+
+  int audio = 0;
+  int noAudio = 0;
 
 
 
@@ -91,82 +95,148 @@ class _AudioPageState extends State<AudioPage> {
   }
 
 
-  noAudioError(){
-    /// TODO: Don't implement this function for vitals
+  // noAudioError(){
+  //   /// TODO: Don't implement this function for vitals
+  //   var currAmp = _amplitude?.current;
+  //   print("This is curr amp $currAmp");
+  //   if( lowCounter3 == threshold3 || highCounter3 == threshold3 ) {
+  //     print('matched');
+  //     // showToast('Audio is too low Please repeat again', ToastGravity.SNACKBAR);
+  //     lowCounter3 = 0;
+  //     highCounter3 = 0;
+  //   }
+  //   else if( highCounter3 == threshold3) {
+  //     print('matched');
+  //     showToast('Audio is too high Please repeat again', ToastGravity.SNACKBAR);
+  //     highCounter3 = 0;
+  //   }
+  //
+  //   else if( currAmp != null && currAmp > -5){
+  //     highCounter3 += 1;
+  //     print('this is counter high 3 $highCounter3');
+  //   }
+  //   else if(currAmp != null && currAmp < -5 && highCounter3 > 0){
+  //     highCounter3= 0 ;
+  //     print('counter high 3 $highCounter3');
+  //   }
+  //   else if( currAmp != null && currAmp <= -15){
+  //     lowCounter3 += 1;
+  //     print('this is counter low 3 $lowCounter3');
+  //   }
+  //   else if(currAmp != null && currAmp > -15 && lowCounter3 > 0){
+  //     lowCounter3 = 0 ;
+  //     print('low counter 3 $lowCounter3');
+  //   }
+  // }
+  //
+  // forFiveSec(){
+  //   var currAmp = _amplitude?.current;
+  //   print("This is curr amp $currAmp");
+  //   if((lowCounter5 == threshold5 && flag == true) || (highCounter5 == threshold5 && flag == true)){
+  //     // showToast('in last 5 sec. for 4 sec the audio was not audioble', ToastGravity.CENTER);
+  //     showAlertDialog(context);
+  //     lowCounter5 = 0;
+  //     highCounter5 = 0;
+  //     flag = false;
+  //     print(lowCounter5);
+  //     print(flag);
+  //   }
+  //   else if( (lowCounter5 == 2 && currAmp != null && currAmp > -30 && currAmp < -5) ||
+  //       (highCounter5 == 2 && currAmp != null && currAmp < -5 && currAmp > -30)){
+  //     flag = true;
+  //     print("flag $flag");
+  //   }
+  //   else if (currAmp != null && currAmp < -30){
+  //     lowCounter5 += 1;
+  //   }
+  //
+  //   else if (currAmp != null && currAmp > -5){
+  //     highCounter5 += 1;
+  //     print("highCounter 1 $highCounter5");
+  //
+  //   }
+  //   else if (currAmp != null && currAmp > -30 && currAmp < -5){
+  //     audioCount +=1;
+  //     print('audio count $audioCount');
+  //   }
+  //   else if(audioCount == 2 && lowCounter5 > 1 && highCounter5 > 1 && flag == true){
+  //     lowCounter5 =0;
+  //     highCounter5 = 0 ;
+  //     flag = false;
+  //   }
+  // }
+
+
+  /// ///////////////////////////////////////// error on audio 3 or 5 sec \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+
+  bool flag5 = false;
+  bool flag3 = false;
+  int c = 0;
+  int ac = 0;
+
+  Errorsignals() {
     var currAmp = _amplitude?.current;
-    print("This is curr amp $currAmp");
-      if( lowCounter3 == threshold3 ) {
-        print('matched');
-        showToast('Audio is too low Please repeat again', ToastGravity.SNACKBAR);
-        lowCounter3 = 0;
-      }
-      else if( highCounter3 == threshold3) {
-        print('matched');
-        showToast('Audio is too high Please repeat again', ToastGravity.SNACKBAR);
-        highCounter3 = 0;
-      }
-      if((lowCounter5 == threshold5 && flag == true) || (highCounter5 == threshold5 && flag == true)){
-        showToast('in last 5 sec. for 4 sec the audio was not audioble', ToastGravity.CENTER);
-        lowCounter5 = 0;
-        highCounter5 = 0;
-        flag = false;
-        print(lowCounter5);
-        print(flag);
-      }
-      else if( currAmp != null && currAmp > -5){
-        highCounter3 += 1;
-        print('this is counter high 3 $highCounter3');
-      }
-      else if(currAmp != null && currAmp < -5 && highCounter3 > 0){
-        highCounter3= 0 ;
-        print('counter high 3 $highCounter3');
-      }
-      else if( currAmp != null && currAmp <= -15){
-        lowCounter3 += 1;
-        print('this is counter low 3 $lowCounter3');
-      }
-    else if(currAmp != null && currAmp > -15 && lowCounter3 > 0){
-        lowCounter3 = 0 ;
-        print('low counter 3 $lowCounter3');
-      }
-  }
+    print(currAmp);
+    if ((currAmp != null && currAmp > -5) ||
+    (currAmp != null && currAmp < -20)) {
+    c += 1;
+    print('c $c');
+    }
+    if (flag5 == true && c == 2) {
+      // showToast('There was no relevent audio for last 7 sec.', ToastGravity.CENTER);
 
-  forFiveSec(){
-    var currAmp = _amplitude?.current;
-    print("This is curr amp $currAmp");
-    if((lowCounter5 == threshold5 && flag == true) || (highCounter5 == threshold5 && flag == true)){
-      showToast('in last 5 sec. for 4 sec the audio was not audioble', ToastGravity.CENTER);
-      lowCounter5 = 0;
-      highCounter5 = 0;
-      flag = false;
-      print(lowCounter5);
-      print(flag);
+      showAlertDialog(context , "audio is not proper please repeat the process again for this Question.","Alert");
+      c = 0;
+      flag5 = false;
+      ac = 0;
+      print('ac $ac');
     }
-    else if( (lowCounter5 == 2 && currAmp != null && currAmp > -30 && currAmp < -5) ||
-        (highCounter5 == 2 && currAmp != null && currAmp < -5 && currAmp > -30)){
-      flag = true;
-      audioCount = 0;
-      print("flag $flag");
-    }
-    else if (currAmp != null && currAmp < -30){
-      lowCounter5 += 1;
-    }
+    else if (c == 3 && flag3 == true) {
+      setState(() {
+        Vibration.vibrate();
+      });
+      // showToast('There was no relevent audio for last 5 sec.', ToastGravity.CENTER);
+      showAlertDialog(context , "audio is not proper please repeat the process again for this Question.","Alert");
 
-    else if (currAmp != null && currAmp > -5){
-      highCounter5 += 1;
-      print("highCounter 1 $highCounter5");
+      c = 0;
+      flag3 = false;
+      ac = 0;
+      print('ac $ac');
+    }
+    else if ((ac == 2 && c >= 0 && (flag3 == true || flag3 == false)) ||
+        (ac == 2 && c >= 0 && (flag5 == true || flag5 == false))) {
+      ac = 0;
+      c = 0;
+      flag3 = false;
+      flag5 = false;
+      print('ac == $ac');
+      print('c == $c');
+      print('ac == $ac');
+      print('flag3 == $flag3');
+      print('flag5 == $flag5');
+    }
+    else if (c == 2 && flag3 == false) {
+      flag3 = true;
 
+      print('falg3 $flag3');
     }
-    else if (currAmp != null && currAmp > -30 && currAmp < -5){
-      audioCount +=1;
-      print('audio count $audioCount');
+    else if (c == 2 && flag3 == true && flag5 == false && currAmp != null &&
+        currAmp > -20 && currAmp < -5) {
+      flag5 = true;
+      flag3 = false;
+      c = 0;
     }
-    else if(audioCount == 2 && lowCounter5 > 1 && highCounter5 > 1 && flag == false){
-      lowCounter5 =0;
-      highCounter5 = 0 ;
-      flag = false;
+    else if ((currAmp != null && currAmp < -5) ||
+        (currAmp != null && currAmp > -20)) {
+      ac += 1;
+      print('ac $ac');
     }
   }
+  /// ///////////////////////////////////////// error on audio 3 or 5 sec \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+
+
 
   @override
   void dispose() {
@@ -184,7 +254,7 @@ class _AudioPageState extends State<AudioPage> {
 
   /// function to start the audio recording
 
-  bool isRecording = false;
+
   Future<String?> startRecording() async {
     bool hasPermission = await checkPermission();
 
@@ -205,9 +275,10 @@ class _AudioPageState extends State<AudioPage> {
 
       ///    ///    ///    ///
     while(isRecording){
-      noAudioError();
-      forFiveSec();
-      await Future.delayed(Duration(seconds: 1));
+      // noAudioError();
+      // forFiveSec();
+      Errorsignals();
+      await Future.delayed(Duration(milliseconds: 1000));
     }
       ///   ///   ///   ///
 
@@ -288,11 +359,12 @@ class _AudioPageState extends State<AudioPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    ///calling the trim function
-                    audioTrim(index);
-                    ///on tap on next button for each question the index must be incremented
-                    index+=1;
+                    // ///calling the trim function
+                    // audioTrim(index);
+                    // ///on tap on next button for each question the index must be incremented
+                    // index+=1;
                     // print("Index : $index");
+                    Vibration.vibrate();
                   },
                   child: const Text("Next"),
                 ),

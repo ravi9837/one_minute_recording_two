@@ -46,6 +46,7 @@ dependencies:
   audioplayers: ^4.0.1
   audio_session: ^0.1.15
   fluttertoast:
+  vibration: ^1.7.5
 
 
 
