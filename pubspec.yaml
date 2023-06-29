@@ -46,7 +46,14 @@ dependencies:
   audioplayers: ^4.0.1
   audio_session: ^0.1.15
   fluttertoast:
+
+
+
   ffmpeg_kit_flutter: ^5.1.0
+  audio_waveforms: ^1.0.4
+  intl: ^0.18.1
+  noise_meter: ^3.2.0
+
 
 
 

@@ -5,8 +5,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'dart:ffi'; // Required for FFI bindings
 import '../const/constants.dart';
 import '../main.dart';
 
@@ -20,6 +18,7 @@ import '../main.dart';
   List<String> listOfData = ['what is your name','what is your age','what is your number','what is your height','what is your weight','what is your DOB','your mother name','your father name'];
   List<String> listOfAns = [];
 
+  ///
 
 void addToCategory(){
   for (String groupName in group) {
@@ -33,8 +32,8 @@ void addToCategory(){
   }
 }
 
-//
-//
+///
+
 // Future<String?> startRecording() async {
 //   bool hasPermission = await checkPermission();
 //   if (hasPermission) {
@@ -62,8 +61,8 @@ void addToCategory(){
     return '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
   }
 
+///
 
-//
 // Future<String> getFilesPath() async {
 //   if (_directoryPath.isEmpty) {
 //     Directory storageDirectory = await getApplicationDocumentsDirectory();
@@ -77,6 +76,8 @@ void addToCategory(){
 //   return '$_directoryPath/$fileName';
 // }
 
+///
+
   deleteRecordings() async {
     Directory recordingsDir = Directory(_directoryPath);
     List<FileSystemEntity> files = recordingsDir.listSync();
@@ -86,6 +87,8 @@ void addToCategory(){
     }
   }
 }
+
+///
 
 Future<bool> checkPermission() async {
   if (!await Permission.microphone.isGranted) {
@@ -101,6 +104,9 @@ Future<bool> checkPermission() async {
     int randomNumber = random.nextInt(90000) + 10000;
     return randomNumber.toString();
   }
+
+
+  ///
 
 Future<void> startRecord() async {
     bool hasPermission = await checkPermission();
@@ -160,6 +166,7 @@ Future<void> startRecord() async {
   }
 
 
+  ///
 
 Future<void> startRecordd() async {
   bool hasPermission = await checkPermission();
@@ -175,6 +182,7 @@ Future<void> startRecordd() async {
       // Get the file path for the recorded audio file
       String recordFilePath = await getFilePath();
 
+      // const config = RecordConfig(encoder: encoder,noiseSuppress: true);
       // Start recording audio
       await _audioRecorder.start(
         path: recordFilePath,
@@ -196,6 +204,10 @@ Future<void> startRecordd() async {
     stopRecord();
   }
 }
+
+///
+
+
 void stopRecord() {
   _audioRecorder.stop();
 }

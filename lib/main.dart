@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:one_minute_recording/const/constants.dart' as constant;
 import 'package:one_minute_recording/record.dart';
-import 'flutter_sound_recorder.dart';
 
 
 void main() async {
@@ -45,7 +44,8 @@ class HomePage extends StatelessWidget {
       backgroundColor: Colors.teal,
       body: Center(
         child: ElevatedButton(
-          child: const Text('Click me ❤️'),
+          // style: ButtonStyle(backgroundColor: Color()),
+          child: const Text('❤',style: TextStyle(fontSize: 40),),
           onPressed: () {
             // groupValues();
             // questionValues();

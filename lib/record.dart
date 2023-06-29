@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:core';
+import 'dart:io' show Platform;
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
-import 'package:one_minute_recording/audio_cutter.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:one_minute_recording/const/toastMessage.dart';
 import 'package:one_minute_recording/methods/audioMethods.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+
+import 'audio_cutter.dart';
 
 
 class AudioPage extends StatefulWidget {
@@ -15,6 +20,9 @@ class AudioPage extends StatefulWidget {
 }
 
 class _AudioPageState extends State<AudioPage> {
+  late final RecorderController recorderController;
+  Duration updateFrequency = const Duration(milliseconds: 100);
+  final StreamController<Duration> _currentDurationController = StreamController.broadcast();
   TextEditingController bitRateController = TextEditingController();
   TextEditingController sampleRateController = TextEditingController();
   int bitRate = 32000;
@@ -24,30 +32,140 @@ class _AudioPageState extends State<AudioPage> {
   List recordings = [];
   AudioPlayer audioPlayer = AudioPlayer();
   String filePath = '';
-  List nextPressed = [];
+
+
+  ///needed for storing the time stamps
+  double normalizationFactor = Platform.isAndroid ? 60 : 40;
   StreamSubscription<Amplitude>? _amplitudeSub;
   Amplitude? _amplitude;
+  final List<double> _waveData = [];  List<double> get waveData => _waveData;
+  List nextPressed = [];
+  double previous = 0;
+  late double fnext;
+  late double snext;
+  var index =0;
+  Duration recordedDuration = Duration.zero;
+  bool _isDisposed = false;
+  Duration elapsedDuration = Duration.zero;
+  List signalValues = [];
+
+
+
+  int lowCounter3 = 0;
+  int highCounter3 = 0;
+  int threshold3 = 3;
+
+  int lowCounter5 = 0;
+  int highCounter5 = 0;
+  int threshold5 = 4;
+  int audioCount = 0;
+
+  bool flag = false;
+
+  TextEditingController textController = TextEditingController();
+  List fiveAmp = [];
+
+
+
 
 
   @override
   void initState() {
     super.initState();
-    startRecording();
-    // var startTime = getCurrentTime();
-    DateTime.now();
-    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
-    print("${DateTime.now().millisecondsSinceEpoch}");
-    print("${DateTime.now()}");
-    // print(DateTime.now().millisecondsSinceEpoch);
-    bitRateController.text = bitRate.toString();
-    sampleRateController.text = sampleRate.toString();
 
+    /// start recording in the initial state
+    startRecording();
+
+    /// Get the amplitude of the audio
     _amplitudeSub = _audioRecorder
-        .onAmplitudeChanged(const Duration(milliseconds:100))
+        .onAmplitudeChanged(const Duration(seconds: 1
+    ))
         .listen((amp) {
       setState(() => _amplitude = amp);
     });
+  }
 
+
+  void notifyListeners() {
+    if (_isDisposed) return;
+  }
+
+
+  noAudioError(){
+    /// TODO: Don't implement this function for vitals
+    var currAmp = _amplitude?.current;
+    print("This is curr amp $currAmp");
+      if( lowCounter3 == threshold3 ) {
+        print('matched');
+        showToast('Audio is too low Please repeat again', ToastGravity.SNACKBAR);
+        lowCounter3 = 0;
+      }
+      else if( highCounter3 == threshold3) {
+        print('matched');
+        showToast('Audio is too high Please repeat again', ToastGravity.SNACKBAR);
+        highCounter3 = 0;
+      }
+      if((lowCounter5 == threshold5 && flag == true) || (highCounter5 == threshold5 && flag == true)){
+        showToast('in last 5 sec. for 4 sec the audio was not audioble', ToastGravity.CENTER);
+        lowCounter5 = 0;
+        highCounter5 = 0;
+        flag = false;
+        print(lowCounter5);
+        print(flag);
+      }
+      else if( currAmp != null && currAmp > -5){
+        highCounter3 += 1;
+        print('this is counter high 3 $highCounter3');
+      }
+      else if(currAmp != null && currAmp < -5 && highCounter3 > 0){
+        highCounter3= 0 ;
+        print('counter high 3 $highCounter3');
+      }
+      else if( currAmp != null && currAmp <= -15){
+        lowCounter3 += 1;
+        print('this is counter low 3 $lowCounter3');
+      }
+    else if(currAmp != null && currAmp > -15 && lowCounter3 > 0){
+        lowCounter3 = 0 ;
+        print('low counter 3 $lowCounter3');
+      }
+  }
+
+  forFiveSec(){
+    var currAmp = _amplitude?.current;
+    print("This is curr amp $currAmp");
+    if((lowCounter5 == threshold5 && flag == true) || (highCounter5 == threshold5 && flag == true)){
+      showToast('in last 5 sec. for 4 sec the audio was not audioble', ToastGravity.CENTER);
+      lowCounter5 = 0;
+      highCounter5 = 0;
+      flag = false;
+      print(lowCounter5);
+      print(flag);
+    }
+    else if( (lowCounter5 == 2 && currAmp != null && currAmp > -30 && currAmp < -5) ||
+        (highCounter5 == 2 && currAmp != null && currAmp < -5 && currAmp > -30)){
+      flag = true;
+      audioCount = 0;
+      print("flag $flag");
+    }
+    else if (currAmp != null && currAmp < -30){
+      lowCounter5 += 1;
+    }
+
+    else if (currAmp != null && currAmp > -5){
+      highCounter5 += 1;
+      print("highCounter 1 $highCounter5");
+
+    }
+    else if (currAmp != null && currAmp > -30 && currAmp < -5){
+      audioCount +=1;
+      print('audio count $audioCount');
+    }
+    else if(audioCount == 2 && lowCounter5 > 1 && highCounter5 > 1 && flag == false){
+      lowCounter5 =0;
+      highCounter5 = 0 ;
+      flag = false;
+    }
   }
 
   @override
@@ -66,9 +184,13 @@ class _AudioPageState extends State<AudioPage> {
 
   /// function to start the audio recording
 
+  bool isRecording = false;
   Future<String?> startRecording() async {
     bool hasPermission = await checkPermission();
+
     if (hasPermission) {
+      isRecording = true;
+      nextPressed.add(DateTime.now().millisecondsSinceEpoch);
       filePath = await getFilePath();
       bitRate = int.tryParse(bitRateController.text) ?? 32000;
       sampleRate = int.tryParse(sampleRateController.text) ?? 16000;
@@ -79,44 +201,80 @@ class _AudioPageState extends State<AudioPage> {
         bitRate: bitRate,
         samplingRate: sampleRate,
       );
-      print(filePath);
-      recordings.add(filePath);
-      setState(() {});
-      print(recordings);
-      return filePath;
+
+
+      ///    ///    ///    ///
+    while(isRecording){
+      noAudioError();
+      forFiveSec();
+      await Future.delayed(Duration(seconds: 1));
+    }
+      ///   ///   ///   ///
+
+
     } else {
       // Handle the case where permission is not granted
       print('Permission not granted to record audio.');
       return null;
     }
+    return null;
   }
+
+
+
 
   /// Function for trimming the complete audio file in chunks according to the questions & answers
 
-  double previous = 0;
-  late double next;
+  // Future<void> audioTrim(id) async{
+  //   /// initialization for variables
+  //   List timeStamps =  nextPressed;
+  //   nextPressed.add(DateTime.now().millisecondsSinceEpoch);
+  //   /// splitting the audio file in chunks duration
+  //   double dur = timeStamps[id+1].toDouble() - timeStamps[id].toDouble();
+  //   next = dur/1000;
+  //   next += previous;
+  //   ///Give the file path in pathToFile variable
+  //   String pathToFile = filePath;
+  //   var result = await AudioCutter.cutAudio(pathToFile,previous,next);
+  //   previous = next;
+  // }
+
   Future<void> audioTrim(id) async{
     /// initialization for variables
     List timeStamps =  nextPressed;
+    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
     /// splitting the audio file in chunks duration
     double dur = timeStamps[id+1].toDouble() - timeStamps[id].toDouble();
-    next = dur/1000;
-    next += previous;
+    fnext = dur/1000;
+    print('fnext $fnext');
+    snext = fnext + previous;
+    print('snext $snext');
     ///Give the file path in pathToFile variable
-    String pathToFile = filePath;
-    var result = await AudioCutter.cutAudio(pathToFile,previous,next);
-    previous = next;
+    if(textController.text.isNotEmpty || fnext > 3){
+      String pathToFile = filePath;
+      var result = await AudioCutter.cutAudio(pathToFile,previous,snext);
+      print(result);
+      previous = snext;
+    }else if(textController.text.isEmpty || fnext <= 3){
+      showToast("Audio duration is very less may be no audio there go to previous question and ask properly!", ToastGravity.CENTER);
+      previous = snext;
+    }
   }
 
   /// function for stopping the audio recording
-
   Future<void> stopRecord() async {
+    nextPressed.add(DateTime
+        .now()
+        .millisecondsSinceEpoch);
     _audioRecorder.stop();
+    isRecording = false;
   }
-  var index =0;
+  ///initialization of first question index
+
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Record Audio'),
@@ -130,34 +288,49 @@ class _AudioPageState extends State<AudioPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-
-                    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
-                    print("${DateTime.now().millisecondsSinceEpoch}");
-                    print("${DateTime.now()}");
-                    print("Trim the audio function start");
+                    ///calling the trim function
                     audioTrim(index);
+                    ///on tap on next button for each question the index must be incremented
                     index+=1;
-                    print("Index : $index");
+                    // print("Index : $index");
                   },
                   child: const Text("Next"),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // var endTime = getCurrentTime();
-                    nextPressed.add(DateTime.now().millisecondsSinceEpoch);
-                    print("${DateTime.now().millisecondsSinceEpoch}");
-                    // print("${DateTime.now()}");
                     stopRecord();
-
                   },
                   child: const Text("Stop"),
                 ),
+                // ElevatedButton(
+                //   onPressed: () {
+                //     // noAudioError();
+                //   },
+                //   child: const Text("amp"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () {
+                //     // addSignals();
+                //   },
+                //   child: const Text("Stop"),
+                // ),
+
                 const SizedBox(height: 16),
                 if (_amplitude != null) ...[
+
                   const SizedBox(height: 40),
                   Text('Current: ${_amplitude?.current ?? 0.0}'),
                   Text('Max: ${_amplitude?.max ?? 0.0}'),
+
+                  TextFormField(
+                    controller: textController,
+                    decoration: InputDecoration(
+                      hintText: "enter Something"
+                    ),
+                  )
                 ],
+
+                // showToast(("${_amplitude!.current}" !=20),ToastGravity.BOTTOM);
               ],
             ),
           ),
@@ -200,5 +373,4 @@ class _AudioPageState extends State<AudioPage> {
       ),
     );
   }
-
 }
